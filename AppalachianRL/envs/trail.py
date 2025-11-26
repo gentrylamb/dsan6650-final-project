@@ -12,7 +12,7 @@ class AppalachianTrailEnv(gym.Env):
     metadata = {"render_modes": ["human"]}
 
     def __init__(self,
-                 trail_length=2200,      # total miles
+                 trail_length=2200,      # total distance (2,197.4 miles)
                  max_energy=100,
                  max_food=10,
                  resupply_points=None,
