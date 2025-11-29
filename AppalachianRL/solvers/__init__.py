@@ -1,6 +1,6 @@
 from .base_solver import BaseSolver
 from .q_learning import QLearningSolver
-from .sarsa import SARSASolver
+from .sarsa import SarsaSolver
 from .policy_gradient import PolicyGradientSolver
 
-__all__ = ['BaseSolver', 'QLearningSolver', 'SARSASolver', 'PolicyGradientSolver']
+__all__ = ['BaseSolver', 'QLearningSolver', 'SarsaSolver', 'PolicyGradientSolver']

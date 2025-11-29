@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "AppalachianRL"
+version = "0.1.0"
+description = "Reinforcement learning environments and solvers for Appalachian Trail decision-making."
+authors = [
+    { name = "Gentry Lamb" }
+]
+readme = "README.md"
+requires-python = ">=3.10"
+
+dependencies = [
+    "numpy>=1.24",
+    "gymnasium>=0.29",
+    "torch>=2.0"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "jupyter",
+    "black",
+    "ruff",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["AppalachianRL*"]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    ".", 
+    "AppalachianRL"
+]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+extend-select = ["E", "F", "W"]
