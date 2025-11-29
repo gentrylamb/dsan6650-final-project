@@ -37,3 +37,11 @@ def test_env_run_full_episode():
             break
 
     assert terminated or truncated
+
+
+if __name__ == "__main__":
+    print("Running environment tests...")
+    test_env_reset()
+    test_env_step()
+    test_env_run_full_episode()
+    print("All environment tests passed!")

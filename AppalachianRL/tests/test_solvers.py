@@ -31,3 +31,11 @@ def test_policy_gradient_runs():
 
     assert len(rewards) == 5
     assert all(isinstance(r, (float, int)) for r in rewards)
+
+
+if __name__ == "__main__":
+    print("Running solver tests...")
+    test_q_learning_runs()
+    test_sarsa_runs()
+    test_policy_gradient_runs()
+    print("All solver tests passed!")
