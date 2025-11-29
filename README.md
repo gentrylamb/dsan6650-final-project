@@ -159,13 +159,3 @@ This runs:
 ## About
 
 Created as a final project for Georgetown’s **DSAN-6650: Reinforcement Learning**, by **Gentry Lamb**.
-
----
-
-If you want, I can also prepare:
-
-* A project logo/banner
-* Diagrams for the MDP (state, action, reward)
-* A "How the environment works internally" section
-
-Just tell me!
