@@ -28,7 +28,7 @@ class PolicyNetwork(nn.Module):
 
 class PolicyGradientSolver(BaseSolver):
     """
-    REINFORCE (Monte Carlo Policy Gradient) implementation.
+    Monte Carlo Policy Gradient implementation.
     """
 
     def __init__(
@@ -37,6 +37,7 @@ class PolicyGradientSolver(BaseSolver):
         lr=1e-3,
         gamma=0.99,
         hidden_size=128,
+        reward_scale=50.0,
         seed=None
     ):
         super().__init__(env, seed)
@@ -45,6 +46,7 @@ class PolicyGradientSolver(BaseSolver):
         act_dim = env.action_space.n
 
         self.gamma = gamma
+        self.reward_scale = reward_scale
 
         # Create policy network
         self.policy = PolicyNetwork(obs_dim, act_dim, hidden_size)
@@ -68,7 +70,8 @@ class PolicyGradientSolver(BaseSolver):
         action = dist.sample()
 
         # store log-prob for training
-        self.log_probs.append(dist.log_prob(action))
+        log_prob = dist.log_prob(action)
+        self.log_probs.append(log_prob)
 
         return int(action.item())
 
@@ -76,7 +79,7 @@ class PolicyGradientSolver(BaseSolver):
     def _compute_returns(self):
         """
         Compute discounted returns G_t for each step:
-        G_t = r_t + γ r_{t+1} + γ^2 r_{t+2} + ...
+        G_t = r_t + gamam*r_{t+1} + gamma^2*r_{t+2} + ...
         """
         returns = []
         G = 0
@@ -109,8 +112,8 @@ class PolicyGradientSolver(BaseSolver):
         self.optimizer.step()
 
         # Clear buffers
-        self.log_probs = []
-        self.rewards = []
+        self.log_probs.clear()
+        self.rewards.clear()
 
     # -----------------------------------------------------
     def train(self, episodes=500):
@@ -129,7 +132,10 @@ class PolicyGradientSolver(BaseSolver):
                 action = self.act(state)
                 next_state, reward, terminated, truncated, _ = self.env.step(action)
 
-                self.rewards.append(reward)
+                # Normalize reward
+                norm_reward = reward / self.reward_scale
+
+                self.rewards.append(norm_reward)
                 ep_reward += reward
 
                 state = next_state

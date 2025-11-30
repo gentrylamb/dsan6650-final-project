@@ -15,7 +15,8 @@ class QLearningSolver(BaseSolver):
         learning_rate=0.1,
         gamma=0.99,
         epsilon=0.1,
-        bins=(20, 10, 10, 3, 50),  # discretization for each state dimension
+        bins=(40, 20, 20, 3, 200),  # updated for new env scale
+        epsilon_decay=None,         # optional
         seed=None
     ):
         super().__init__(env, seed)
@@ -23,8 +24,8 @@ class QLearningSolver(BaseSolver):
         self.lr = learning_rate
         self.gamma = gamma
         self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
 
-        # Discretization bins (for: miles, energy, food, weather, day)
         self.bins = bins
         self.bin_edges = self._create_bin_edges()
 
@@ -40,10 +41,16 @@ class QLearningSolver(BaseSolver):
 
         edges = []
         for low, high, num in zip(lows, highs, self.bins):
+            # Ensure proper scaling for large ranges
             edges.append(np.linspace(low, high, num + 1)[1:-1])
         return edges
 
     def _discretize(self, state):
+        # Clip state to avoid OOB values
+        low = self.env.observation_space.low
+        high = self.env.observation_space.high
+        state = np.clip(state, low, high)
+
         return tuple(
             np.digitize(s, edges)
             for s, edges in zip(state, self.bin_edges)
@@ -55,6 +62,7 @@ class QLearningSolver(BaseSolver):
     def act(self, state):
         if self.rng.random() < self.epsilon:
             return self.env.action_space.sample()
+
         s = self._discretize(state)
         return int(np.argmax(self.q_table[s]))
 
@@ -80,20 +88,30 @@ class QLearningSolver(BaseSolver):
 
                 next_state, reward, terminated, truncated, _ = self.env.step(action)
                 done = terminated or truncated
-
                 s_next_disc = self._discretize(next_state)
 
-                # Q-learning target
-                best_next_q = np.max(self.q_table[s_next_disc])
-                td_target = reward + self.gamma * best_next_q
-                td_error = td_target - self.q_table[s_disc][action]
+                # Normalize rewards mildly to stabilize Q updates
+                norm_reward = reward / 50.0
 
-                # Update rule
+                # Terminal state handling
+                if done:
+                    td_target = norm_reward
+                else:
+                    td_target = norm_reward + self.gamma * np.max(self.q_table[s_next_disc])
+
+                td_error = td_target - self.q_table[s_disc][action]
                 self.q_table[s_disc][action] += self.lr * td_error
 
                 state = next_state
                 total_r += reward
 
+            # Optional epsilon decay
+            if self.epsilon_decay is not None:
+                self.epsilon = max(0.01, self.epsilon * self.epsilon_decay)
+
             rewards.append(total_r)
+
+            if (ep + 1) % 50 == 0:
+                print(f"Episode {ep+1}/{episodes} | Reward: {total_r:.1f}")
 
         return rewards

@@ -122,9 +122,9 @@ class AppalachianTrailEnv(gym.Env):
             miles = dist
             energy_cost = 1*miles - 50   # 50% recovery
             food_cost = 0
-            if dist > 5:
+            if dist > 4:
                 # invalid action
-                print("\n   Invalid Action: No resupply point nearby.\n")
+                print("   INVALID ACTION: No resupply point nearby.")
                 reward -= 25
 
             else:
@@ -135,7 +135,7 @@ class AppalachianTrailEnv(gym.Env):
         if self.weather == 1:   # rain
             energy_cost *= 1.2
         elif self.weather == 2: # storm
-            energy_cost *= 1.4
+            energy_cost *= 1.5
 
         # Apply transitions
         self.miles_remaining = max(0, self.miles_remaining - miles)
@@ -151,31 +151,31 @@ class AppalachianTrailEnv(gym.Env):
         reward -= 1  # time penalty
 
         if miles > 0:
-            reward += miles * 1  # small positive for progress
+            reward += miles * 0.5  # small positive for progress
 
-        if self.energy <= 5:
+        if self.energy <= 10:
             reward -= 50  # collapse risk
 
-        if self.food <= 0.5:
+        if self.food <= 1:
             reward -= 50  # starvation risk
 
         # Completion Case
         if self.miles_remaining <= 0:
-            print("\n   Success: Congrats, you completed the AT!\n")
-            reward += 1000
+            print("   SUCCESS: Congrats, you completed the AT!")
+            reward += 100
             done = True
 
         # Failure Cases
         if self.energy == 0:
-            print("\n   Failure: You ran out of energy!\n")
+            print("   FAILURE: You ran out of energy!")
             done = True
 
         if self.food == 0:
-            print("\n   Failure: You ran out of food!\n")
+            print("   FAILURE: You ran out of food!")
             done = True
             
         if self.day >= self.max_days:
-            print("\n   Failure: You took too long!\n")
+            print("   FAILURE: You took too long!")
             done = True
         
         return self._get_obs(), reward, done, False, info

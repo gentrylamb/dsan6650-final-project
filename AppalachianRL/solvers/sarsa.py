@@ -6,7 +6,7 @@ from .base_solver import BaseSolver
 class SarsaSolver(BaseSolver):
     """
     Tabular SARSA (on-policy TD) solver for the Appalachian Trail environment.
-    Uses the same state discretization as the Q-learning agent.
+    Continuous state variables are discretized into bins.
     """
 
     def __init__(
@@ -15,7 +15,8 @@ class SarsaSolver(BaseSolver):
         learning_rate=0.1,
         gamma=0.99,
         epsilon=0.1,
-        bins=(20, 10, 10, 3, 50),
+        bins=(40, 20, 20, 3, 200),   # updated to match env scale
+        epsilon_decay=None,          # optional
         seed=None
     ):
         super().__init__(env, seed)
@@ -23,6 +24,7 @@ class SarsaSolver(BaseSolver):
         self.lr = learning_rate
         self.gamma = gamma
         self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
 
         # Discretization setup
         self.bins = bins
@@ -44,6 +46,11 @@ class SarsaSolver(BaseSolver):
         return edges
 
     def _discretize(self, state):
+        # Clip state to avoid going outside bin edges
+        low = self.env.observation_space.low
+        high = self.env.observation_space.high
+        state = np.clip(state, low, high)
+
         return tuple(
             np.digitize(s, edges)
             for s, edges in zip(state, self.bin_edges)
@@ -80,14 +87,24 @@ class SarsaSolver(BaseSolver):
 
                 s_next_disc = self._discretize(next_state)
 
+                # Normalize reward to stabilize learning
+                norm_reward = reward / 50.0
+
                 # Choose next action (on-policy)
-                if self.rng.random() < self.epsilon:
-                    next_action = self.env.action_space.sample()
+                if not done:
+                    if self.rng.random() < self.epsilon:
+                        next_action = self.env.action_space.sample()
+                    else:
+                        next_action = int(np.argmax(self.q_table[s_next_disc]))
                 else:
-                    next_action = int(np.argmax(self.q_table[s_next_disc]))
+                    next_action = None  # terminal
 
                 # SARSA target
-                td_target = reward + self.gamma * self.q_table[s_next_disc][next_action] * (not done)
+                if done:
+                    td_target = norm_reward
+                else:
+                    td_target = norm_reward + self.gamma * self.q_table[s_next_disc][next_action]
+
                 td_error = td_target - self.q_table[s_disc][action]
 
                 # Update
@@ -98,6 +115,13 @@ class SarsaSolver(BaseSolver):
                 s_disc = s_next_disc
                 action = next_action
 
+            # Optional epsilon decay
+            if self.epsilon_decay is not None:
+                self.epsilon = max(0.01, self.epsilon * self.epsilon_decay)
+
             rewards.append(total_r)
+
+            if (ep + 1) % 50 == 0:
+                print(f"Episode {ep+1}/{episodes} | Reward: {total_r:.1f}")
 
         return rewards
