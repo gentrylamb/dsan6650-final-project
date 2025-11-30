@@ -8,7 +8,7 @@ from .envs.trail import AppalachianTrailEnv
 
 # Expose tabular RL solvers
 from .solvers.q_learning import QLearningSolver
-from .solvers.sarsa import SARSASolver
+from .solvers.sarsa import SarsaSolver
 
 # Expose deep RL solver
 from .solvers.policy_gradient import PolicyGradientSolver
@@ -16,6 +16,6 @@ from .solvers.policy_gradient import PolicyGradientSolver
 __all__ = [
     "AppalachianTrailEnv",
     "QLearningSolver",
-    "SARSASolver",
+    "SarsaSolver",
     "PolicyGradientSolver",
 ]
