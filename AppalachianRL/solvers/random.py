@@ -25,6 +25,10 @@ class RandomAgent():
                 done = terminated or truncated
                 total_r += reward
                 state = next_state
+            
             rewards.append(total_r)
             
+            if (ep + 1) % 50 == 0:
+                print(f"Episode {ep+1}/{episodes} | Reward: {total_r:.1f}")
+
         return rewards
