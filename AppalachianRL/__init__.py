@@ -6,6 +6,9 @@ for modeling thru-hiker decision-making on the Appalachian Trail.
 # Expose environments
 from .envs.trail import AppalachianTrailEnv
 
+# Expose random solver
+from .solvers.random import RandomAgent
+
 # Expose tabular RL solvers
 from .solvers.q_learning import QLearningSolver
 from .solvers.sarsa import SarsaSolver
@@ -18,4 +21,5 @@ __all__ = [
     "QLearningSolver",
     "SarsaSolver",
     "PolicyGradientSolver",
+    "RandomAgent"
 ]
