@@ -1,4 +1,3 @@
-
 # AppalachianRL
 
 **Reinforcement Learning on the Appalachian Trail**
@@ -22,7 +21,7 @@ Clone the repo and install in editable mode:
 ```bash
 git clone <your-repo-url>
 cd dsan6650-final-project
-pip install -e .
+pip install -e ./AppalachianRL/
 ```
 
 Dependencies (auto-installed):
@@ -40,12 +39,15 @@ Dependencies (auto-installed):
 AppalachianRL/
 │
 ├── envs/
-│   └── trail.py              # AppalachianTrailEnv (Gymnasium environment)
+│   ├── trail.py              # AppalachianTrailEnv (Gymnasium environment)
+│   └── trail_adv.py          # Advanced implementation
 │
 ├── solvers/
 │   ├── base.py               # Base class for RL solvers
+│   ├── random.py             # Random actions as baseline
 │   ├── q_learning.py         # Q-Learning implementation
 │   ├── sarsa.py              # SARSA implementation
+│   ├── actor_critic.py       # Actor-Critic implementation
 │   └── policy_gradient.py    # Deep RL policy gradient solver
 │
 ├── tests/
@@ -74,18 +76,18 @@ AppalachianRL/
 
 | Action | Meaning                                  |
 | ------ | ---------------------------------------- |
-| `0`    | Hike 1 mile                              |
-| `1`    | Hike 3 miles                             |
-| `2`    | Hike 5 miles                             |
-| `3`    | Rest (recover energy, consume food)      |
-| `4`    | Resupply (only valid at resupply points) |
+| `0`    | Hike small day (8-12 miles)              |
+| `1`    | Hike small day (13-18 miles)             |
+| `2`    | Hike small day (19-25+ miles)            |
+| `3`    | Rest / Zero Day                          |
+| `4`    | Resupply Day (only valid at points)      |
 
 ### Reward Signal
 
-* `-1` per day (time pressure)
-* `+0.5*miles` for hiking
+* Small negative (-1) per day (time pressure)
+* Small positive (0.5*miles) for progress
 * Heavy penalties for zero food/energy
-* `+1000` for completing the trail
+* large positive (300-1000) for completing the trail
 
 ---
 
@@ -99,35 +101,6 @@ env = AppalachianTrailEnv()
 solver = QLearningSolver(env, alpha=0.1, gamma=0.99, epsilon=0.2)
 
 solver.train(episodes=500)
-solver.save("qtable.npy")
-```
-
----
-
-## Example: Running SARSA
-
-```python
-from AppalachianRL.envs.trail import AppalachianTrailEnv
-from AppalachianRL.solvers.sarsa import SarsaSolver
-
-env = AppalachianTrailEnv()
-solver = SarsaSolver(env, alpha=0.1, gamma=0.99, epsilon=0.1)
-
-solver.train(episodes=300)
-```
-
----
-
-## Example: Policy Gradient Agent
-
-```python
-from AppalachianRL.envs.trail import AppalachianTrailEnv
-from AppalachianRL.solvers.policy_gradient import PolicyGradientSolver
-
-env = AppalachianTrailEnv()
-solver = PolicyGradientSolver(env, lr=1e-3, gamma=0.99)
-
-solver.train(episodes=1000)
 ```
 
 ---
@@ -137,13 +110,12 @@ solver.train(episodes=1000)
 From the repo root:
 
 ```bash
-pytest -q
+# test that env works as expected
+python AppalachianRL/tests/test_env.py
+
+# test that solvers function as expected
+python AppalachianRL/tests/test_solvers.py
 ```
-
-This runs:
-
-* **Environment tests** (`test_env.py`)
-* **Solver functional tests** (`test_solvers.py`)
 
 ---
 
