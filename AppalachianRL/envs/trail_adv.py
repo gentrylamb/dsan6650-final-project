@@ -171,7 +171,7 @@ class AppalachianTrailAdvEnv(gym.Env):
 
         # Completion
         if self.miles_remaining <= 0:
-            reward += 100
+            reward += 500
             done = True
 
         return self._get_obs(), reward, done, False, info

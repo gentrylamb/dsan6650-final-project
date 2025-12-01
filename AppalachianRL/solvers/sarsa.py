@@ -15,7 +15,8 @@ class SarsaSolver(BaseSolver):
         learning_rate=0.1,
         gamma=0.99,
         epsilon=0.1,
-        bins=(40, 20, 20, 3, 200),   # updated to match env scale
+        bins=(40, 20, 20, 3, 200),
+        # bins=(10, 5, 3, 10),         # for env without energy
         epsilon_decay=None,          # optional
         seed=None
     ):
