@@ -67,9 +67,10 @@ class SarsaSolver(BaseSolver):
     # -----------------------------------------------------
     def train(self, episodes=5000):
         rewards = []
+        failure_reasons = []
 
         for ep in range(episodes):
-            state, _ = self.env.reset()
+            state, info = self.env.reset()
             s_disc = self._discretize(state)
 
             # Choose initial action
@@ -82,7 +83,7 @@ class SarsaSolver(BaseSolver):
             done = False
 
             while not done:
-                next_state, reward, terminated, truncated, _ = self.env.step(action)
+                next_state, reward, terminated, truncated, info = self.env.step(action)
                 done = terminated or truncated
                 total_r += reward
 
@@ -103,6 +104,7 @@ class SarsaSolver(BaseSolver):
                 # SARSA target
                 if done:
                     td_target = norm_reward
+                    failure_reasons.append(info.get("failure_reason", "Unknown"))
                 else:
                     td_target = norm_reward + self.gamma * self.q_table[s_next_disc][next_action]
 
@@ -125,4 +127,4 @@ class SarsaSolver(BaseSolver):
             if (ep + 1) % 50 == 0:
                 print(f"Episode {ep+1}/{episodes} | Reward: {total_r:.1f}")
 
-        return rewards
+        return rewards, failure_reasons

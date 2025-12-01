@@ -166,22 +166,26 @@ class AppalachianTrailEnv(gym.Env):
         # Completion Case
         if self.miles_remaining <= 0:
             print("   SUCCESS: Congrats, you completed the AT!")
+            info["failure_reason"] = "Success"
             reward += 300
             done = True
 
         # Failure Cases
-        if self.energy == 0:
+        if self.energy <= 0:
             print("   FAILURE: You ran out of energy!")
+            info["failure_reason"] = "Energy"
             reward -= 100
             done = True
 
-        if self.food == 0:
+        if self.food <= 0:
             print("   FAILURE: You ran out of food!")
+            info["failure_reason"] = "Food"
             reward -= 100
             done = True
             
         if self.day >= self.max_days:
             print("   FAILURE: You took too long!")
+            info["failure_reason"] = "Time"
             reward -= 100
             done = True
         
