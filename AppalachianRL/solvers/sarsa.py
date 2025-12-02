@@ -90,7 +90,7 @@ class SarsaSolver(BaseSolver):
                 s_next_disc = self._discretize(next_state)
 
                 # Normalize reward to stabilize learning
-                norm_reward = reward / 50.0
+                # reward = reward / 50.0
 
                 # Choose next action (on-policy)
                 if not done:
@@ -103,10 +103,10 @@ class SarsaSolver(BaseSolver):
 
                 # SARSA target
                 if done:
-                    td_target = norm_reward
+                    td_target = reward
                     failure_reasons.append(info.get("failure_reason", "Unknown"))
                 else:
-                    td_target = norm_reward + self.gamma * self.q_table[s_next_disc][next_action]
+                    td_target = reward + self.gamma * self.q_table[s_next_disc][next_action]
 
                 td_error = td_target - self.q_table[s_disc][action]
 

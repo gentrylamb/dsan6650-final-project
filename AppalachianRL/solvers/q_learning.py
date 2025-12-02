@@ -93,14 +93,14 @@ class QLearningSolver(BaseSolver):
                 s_next_disc = self._discretize(next_state)
 
                 # Normalize rewards mildly to stabilize Q updates
-                norm_reward = reward / 50.0
+                # reward = reward / 50.0
 
                 # Terminal state handling
                 if done:
-                    td_target = norm_reward
+                    td_target = reward
                     failure_reasons.append(info.get("failure_reason", "Unknown"))
                 else:
-                    td_target = norm_reward + self.gamma * np.max(self.q_table[s_next_disc])
+                    td_target = reward + self.gamma * np.max(self.q_table[s_next_disc])
 
                 td_error = td_target - self.q_table[s_disc][action]
                 self.q_table[s_disc][action] += self.lr * td_error

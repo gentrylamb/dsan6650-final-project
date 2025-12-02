@@ -37,7 +37,6 @@ class PolicyGradientSolver(BaseSolver):
         lr=1e-3,
         gamma=0.99,
         hidden_size=128,
-        reward_scale=50.0,
         seed=None
     ):
         super().__init__(env, seed)
@@ -46,7 +45,6 @@ class PolicyGradientSolver(BaseSolver):
         act_dim = env.action_space.n
 
         self.gamma = gamma
-        self.reward_scale = reward_scale
 
         # Create policy network
         self.policy = PolicyNetwork(obs_dim, act_dim, hidden_size)
@@ -134,9 +132,9 @@ class PolicyGradientSolver(BaseSolver):
                 next_state, reward, terminated, truncated, info = self.env.step(action)
 
                 # Normalize reward
-                norm_reward = reward / self.reward_scale
+                # reward = reward / 50
 
-                self.rewards.append(norm_reward)
+                self.rewards.append(reward)
                 ep_reward += reward
 
                 state = next_state
