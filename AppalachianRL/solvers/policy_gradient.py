@@ -122,6 +122,7 @@ class PolicyGradientSolver(BaseSolver):
         """
 
         episode_rewards = []
+        failure_reasons = []
 
         for ep in range(episodes):
             state, _ = self.env.reset()
@@ -130,7 +131,7 @@ class PolicyGradientSolver(BaseSolver):
 
             while not done:
                 action = self.act(state)
-                next_state, reward, terminated, truncated, _ = self.env.step(action)
+                next_state, reward, terminated, truncated, info = self.env.step(action)
 
                 # Normalize reward
                 norm_reward = reward / self.reward_scale
@@ -141,6 +142,10 @@ class PolicyGradientSolver(BaseSolver):
                 state = next_state
                 done = terminated or truncated
 
+                # if episode ended, record reason
+                if done:
+                    failure_reasons.append(info.get('failure_reason', 'Unknown'))
+
             # Episode finished → update policy
             self._update_policy()
 
@@ -149,4 +154,4 @@ class PolicyGradientSolver(BaseSolver):
             if (ep + 1) % 50 == 0:
                 print(f"Episode {ep+1}/{episodes} | Reward: {ep_reward:.1f}")
 
-        return episode_rewards
+        return episode_rewards, failure_reasons

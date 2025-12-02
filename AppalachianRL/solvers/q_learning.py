@@ -72,6 +72,7 @@ class QLearningSolver(BaseSolver):
     # -----------------------------------------------------
     def train(self, episodes=5000):
         rewards = []
+        failure_reasons = []
 
         for ep in range(episodes):
             state, _ = self.env.reset()
@@ -87,7 +88,7 @@ class QLearningSolver(BaseSolver):
                 else:
                     action = int(np.argmax(self.q_table[s_disc]))
 
-                next_state, reward, terminated, truncated, _ = self.env.step(action)
+                next_state, reward, terminated, truncated, info = self.env.step(action)
                 done = terminated or truncated
                 s_next_disc = self._discretize(next_state)
 
@@ -97,6 +98,7 @@ class QLearningSolver(BaseSolver):
                 # Terminal state handling
                 if done:
                     td_target = norm_reward
+                    failure_reasons.append(info.get("failure_reason", "Unknown"))
                 else:
                     td_target = norm_reward + self.gamma * np.max(self.q_table[s_next_disc])
 
@@ -115,4 +117,4 @@ class QLearningSolver(BaseSolver):
             if (ep + 1) % 50 == 0:
                 print(f"Episode {ep+1}/{episodes} | Reward: {total_r:.1f}")
 
-        return rewards
+        return rewards, failure_reasons
