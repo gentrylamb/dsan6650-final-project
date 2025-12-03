@@ -17,8 +17,9 @@ class AppalachianTrailEnv(gym.Env):
                  trail_length=2200,    # Total distance (2,197.4 miles)
                  max_energy=100,       # Energy (percent of 100)
                  max_food=10,          # Number of days of food
-                 max_days = 213,       # Approx. 7 months
-                 seed=None):
+                 max_days = 243,       # Approx. 8 months
+                 seed=None,
+                 verbose=False):
 
         super().__init__()
         self.trail_length = trail_length
@@ -26,9 +27,10 @@ class AppalachianTrailEnv(gym.Env):
         self.max_food = max_food
         self.max_days = max_days         
         self.rng = np.random.default_rng(seed)
+        self.verbose = verbose
 
         # Resupply points (https://whiteblaze.net/forum/content.php/1344-Resuppling-within-one-miles-from-the-Appalachian-Trail-for-a-thru-hike)
-        self.resupply_points = [round(item) for item in pd.read_csv("data/resupply_points.csv")['mile'].tolist()]
+        self.resupply_points = sorted([round(item) for item in pd.read_csv("data/resupply_points.csv")['mile'].tolist()])
 
         # --- Observation Space ---
         # [miles_remaining, energy, food, weather, day]
@@ -66,6 +68,9 @@ class AppalachianTrailEnv(gym.Env):
     # --------------------------------------------------------
 
     def _get_obs(self):
+        """
+        Function to return state space
+        """
         return np.array([
             self.miles_remaining,
             self.energy,
@@ -75,17 +80,32 @@ class AppalachianTrailEnv(gym.Env):
         ], dtype=np.float32)
     
     # --------------------------------------------------------
+    
+    def _vprint(self, *args, **kwargs):
+        """
+        Helper function for verbose printing
+        """
+        if self.verbose:
+            print(*args, **kwargs)
+    
+    # --------------------------------------------------------
 
     def _calculate_distance_to_resupply(self):
+        """
+        Function to calculate distance to next resupply point
+        """
         # get current mile and find distance to closest resupply
         current_mile = self.trail_length - self.miles_remaining
-        next_resupply = min([p for p in self.resupply_points if p > current_mile], default=float('inf'))
+        next_resupply = min([p for p in self.resupply_points if p >= current_mile], default=float('inf'))
 
         return next_resupply - current_mile
     
     # --------------------------------------------------------
 
     def step(self, action):
+        """
+        Function to take a step in the environment
+        """
         done = False
         info = {}
         reward = 0
@@ -94,7 +114,22 @@ class AppalachianTrailEnv(gym.Env):
         self.weather = self.rng.choice([0, 1, 2], p=[0.7, 0.2, 0.1])  # mostly clear
 
         # dist to next resupply
-        resupply_dist = self._calculate_distance_to_resupply()
+        # resupply_dist = self._calculate_distance_to_resupply()
+
+
+        ## TESTING===================================
+        # 1. Calculate current location
+        current_mile = self.trail_length - self.miles_remaining
+        
+        # 2. Check if we are CURRENTLY at a resupply point (for Action 4)
+        # We use a small epsilon (0.1) for float comparison safety
+        is_at_resupply = any(abs(current_mile - p) < 0.1 for p in self.resupply_points)
+
+        # 3. Calculate distance to the NEXT point (for Hiking Actions)
+        # We keep the original logic here to prevent overshooting
+        next_resupply_point = min([p for p in self.resupply_points if p > current_mile + 0.1], default=float('inf'))
+        resupply_dist = next_resupply_point - current_mile
+        ## TESTING===================================
 
         # ----------------------------------------------------
         # Action Effects
@@ -122,23 +157,24 @@ class AppalachianTrailEnv(gym.Env):
 
             # Make sure agent doesnt pass resupply stop
             if resupply_dist <= miles:
-                print('   STOPPED: You stopped at a resupply point')
+                self._vprint('   STOPPED: You stopped at a resupply point')
                 miles = resupply_dist # stop at the point
                 info["stopped_at_resuppply"] = True
 
         # Rest/Zero Day Action (0 miles)
         elif action == 3: 
-            print(f"   REST: You rested at {self.trail_length - self.miles_remaining} miles.")
+            self._vprint(f"   REST: You rested at {self.trail_length - self.miles_remaining} miles.")
             miles = 0
             energy_cost = -80   # 80% recovery
             food_cost = 0.5
 
          # Resupply Day Action
         elif action == 4:
-            if resupply_dist <= 0.5:
+            # if resupply_dist <= 0.5:
+            if is_at_resupply:
                 # valid action
-                print(f"   RESUPPLY: You resupplied at {self.trail_length - self.miles_remaining} miles.")
-                miles = resupply_dist
+                self._vprint(f"   RESUPPLY: You resupplied at {self.trail_length - self.miles_remaining} miles.")
+                miles = 0
                 energy_cost = -50
                 food_cost = 0
                 # refill and reward
@@ -146,7 +182,7 @@ class AppalachianTrailEnv(gym.Env):
                 reward += 150
             else:
                 # invalid action
-                print(f"   INVALID ACTION: No resupply point nearby ({resupply_dist} miles away).")
+                self._vprint(f"   INVALID ACTION: No resupply point nearby ({resupply_dist} miles away).")
                 miles = 0
                 energy_cost = 0
                 food_cost = 0
@@ -159,8 +195,8 @@ class AppalachianTrailEnv(gym.Env):
             elif self.weather == 2: energy_cost *= 1.3 # storm
         
         # scale down for testing
-        food_cost *= 0
-        energy_cost *= 0
+        food_cost *= .5
+        energy_cost *= .5
 
         # Apply transitions
         self.miles_remaining = max(0, self.miles_remaining - miles)
@@ -198,7 +234,7 @@ class AppalachianTrailEnv(gym.Env):
         if self.food <= 0:
             print("   FAILURE: You ran out of food!")
             info["failure_reason"] = "Food"
-            reward -= 300
+            reward -= 200
             done = True
             
         if self.day >= self.max_days:
@@ -214,3 +250,5 @@ class AppalachianTrailEnv(gym.Env):
     def render(self):
         print(f"Day {self.day}: {self.miles_remaining:.1f} miles left | "
               f"Energy {self.energy:.1f} | Food {self.food:.1f} | Weather {self.weather}")
+
+

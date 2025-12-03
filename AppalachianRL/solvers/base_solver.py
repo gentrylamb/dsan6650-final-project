@@ -55,3 +55,5 @@ class BaseSolver(ABC):
                 self.env.render()
 
         return total_reward
+    
+    

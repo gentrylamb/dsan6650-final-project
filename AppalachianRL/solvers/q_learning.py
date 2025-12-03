@@ -118,3 +118,5 @@ class QLearningSolver(BaseSolver):
                 print(f"Episode {ep+1}/{episodes} | Reward: {total_r:.1f}")
 
         return rewards, failure_reasons
+    
+    
