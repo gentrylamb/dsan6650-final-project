@@ -9,8 +9,9 @@ The project includes:
 
 * A custom **Gymnasium environment**
 * Tabular RL solvers: **Q-Learning** and **SARSA**
-* A deep RL **Policy Gradient** agent
+* Pollicy-based solvers: Deep RL **Policy Gradient** agent and **Soft Actor-Critic (SAC)**
 * Unit tests for correctness and reproducibility
+* A notebook file to showcase the training results of the solvers 
 
 ---
 
@@ -84,10 +85,10 @@ AppalachianRL/
 
 ### Reward Signal
 
-* Small negative (-1) per day (time pressure)
-* Small positive (0.5*miles) for progress
+* Small negative per day (time pressure)
+* Small positive for progress
 * Heavy penalties for zero food/energy
-* large positive (300-1000) for completing the trail
+* large positive for completing the trail
 
 ---
 
